@@ -1,5 +1,6 @@
 package br.com.muniz.activityrecognition.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -10,6 +11,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.fragment.app.viewModels
 import br.com.muniz.activityrecognition.R
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,7 +23,7 @@ class FragmentRecognition : Fragment(), SensorEventListener {
     private var sensor: Sensor? = null
     private var sensorManager: SensorManager? = null
 
-    val recognitionViewModel: FragmentRecognitionViewModel by viewModels()
+    private val recognitionViewModel: FragmentRecognitionViewModel by viewModels()
 
     override fun onStart() {
         super.onStart()
@@ -33,16 +35,22 @@ class FragmentRecognition : Fragment(), SensorEventListener {
         unregisterSensor()
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
+        recognitionViewModel.finalMovement.observe(viewLifecycleOwner, {
+            it?.let {
+               val a = requireView().findViewById(R.id.tv_activity) as TextView
+                a.text = "${it.movement} / ${it.intensity}"
+            }
+        })
         return inflater.inflate(R.layout.fragment_recognition, container, false)
     }
 
     override fun onSensorChanged(p0: SensorEvent?) {
-        Timber.d("mylog ${p0?.values?.get(0)}/${p0?.values?.get(1)}/${p0?.values?.get(2)}")
+        recognitionViewModel.getActivity(p0)
     }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {

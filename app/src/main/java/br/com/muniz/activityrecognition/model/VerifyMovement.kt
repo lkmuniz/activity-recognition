@@ -1,19 +1,23 @@
 package br.com.muniz.activityrecognition.model
 
 import android.hardware.SensorEvent
+import android.util.Log
 import br.com.muniz.activityrecognition.Util.LYING_RANGE
 import br.com.muniz.activityrecognition.Util.SIT_RANGE
 import br.com.muniz.activityrecognition.Util.WALK_RANGE
 import br.com.muniz.activityrecognition.data.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
+import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Singleton
-class VerifyMovement {
+class VerifyMovement @Inject constructor() {
     private companion object {
         const val TIME_RANGE = 2500
         const val POS_X = 0
@@ -54,22 +58,24 @@ class VerifyMovement {
         return false
     }
 
-    private fun setupSensorData() {
-        val xAverage = xArray.average()
-        val yAverage = yArray.average()
-        val zAverage = zArray.average()
+    private suspend fun setupSensorData() {
+        withContext(Dispatchers.IO) {
+            val xAverage = xArray.average()
+            val yAverage = yArray.average()
+            val zAverage = zArray.average()
 
-        val xVariance = calculateVariance(xArray, xAverage.toFloat())
-        val yVariance = calculateVariance(yArray, yAverage.toFloat())
-        val zVariance = calculateVariance(zArray, zAverage.toFloat())
+            val xVariance = calculateVariance(xArray, xAverage.toFloat())
+            val yVariance = calculateVariance(yArray, yAverage.toFloat())
+            val zVariance = calculateVariance(zArray, zAverage.toFloat())
 
-        val rms = calculateRMS(xAverage, yAverage, zAverage)
+            val rms = calculateRMS(xAverage, yAverage, zAverage)
 
-        sensorData = arrayOf(xVariance, xAverage, yVariance, yAverage, zVariance, zAverage, rms)
+            sensorData = arrayOf(xVariance, xAverage, yVariance, yAverage, zVariance, zAverage, rms)
+        }
     }
 
-    private fun getActivity(): FinalActivity? {
-        return try {
+    private suspend fun getActivity(): FinalActivity? = withContext(Dispatchers.IO) {
+        try {
             val movement = WekaDataActivity.classify(sensorData).toInt()
             val intensity = when (movement) {
                 in WALK_RANGE -> WekaDataIntensityWalk.classify(sensorData).toInt()
@@ -100,11 +106,18 @@ class VerifyMovement {
 
     private fun saveData(sensorEvent: SensorEvent) {
         xArray.add(sensorEvent.values[POS_X])
-        yArray.add(sensorEvent.values[POS_Y])
+        yArray.add(sensorEvent.values[POS_Y] * -1)
         zArray.add(sensorEvent.values[POS_Z])
     }
 
     private fun clearData() {
+        xArray.clear()
+        yArray.clear()
+        zArray.clear()
+
+        for (i in sensorData.indices) {
+            sensorData[i] = 0.0
+        }
     }
 
 }
