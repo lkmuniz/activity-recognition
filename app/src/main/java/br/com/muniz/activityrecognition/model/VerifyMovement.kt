@@ -27,7 +27,7 @@ class VerifyMovement @Inject constructor() {
 
     private var initialTime: Long = 0
 
-    private lateinit var sensorData: Array<Double>
+    private lateinit var sensorData: Array<Double?>
     private val xArray = mutableListOf<Float>()
     private val yArray = mutableListOf<Float>()
     private val zArray = mutableListOf<Float>()
