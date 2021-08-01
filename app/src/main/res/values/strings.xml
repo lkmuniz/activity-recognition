@@ -2,4 +2,12 @@
     <string name="app_name">Activity Recognition</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="walk">Andando</string>
+    <string name="sit">Sentado </string>
+    <string name="lying">Deitado</string>
+
+    <string name="soft">Tranquilo</string>
+    <string name="moderate">Moderado</string>
+    <string name="high">Agitado</string>
 </resources>
